@@ -1,0 +1,315 @@
+service: backend
+frameworkVersion: '3'
+
+custom:
+  settings:
+    origin: "http://localhost:8080"
+    USER_TABLE: usersTable
+    PRODUCT_TABLE: productsTable
+    EVENT_TABLE: eventsTable
+    DEAL_TABLE: dealsTable
+    RECHANGE_TABLE: rechangeTable
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: us-east-1
+  environment: ${self:custom.settings}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.USER_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.PRODUCT_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.EVENT_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DEAL_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.RECHANGE_TABLE}"
+
+
+functions:
+  hello:
+    handler: handler.hello
+    #user
+  login:
+    handler: apps/user.login
+    events:
+      - http:
+          path: user/login
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  register:
+    handler: apps/user.register
+    events:
+      - http:
+          path: user/register
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  updateUser:
+    handler: apps/user.update
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/update
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getnotification:
+    handler: apps/user.getNotification
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/notification
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  #product
+  createproduct:
+    handler:
+      - apps/product.create
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: product/create
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  updateproduct:
+    handler:
+      - apps/product.update
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: product/update/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  deleteproduct:
+    handler:
+      - apps/product.delete
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: product/delete/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getproduct:
+    handler:
+      - apps/product.get
+    events:
+      - http:
+          path: product/get/{id}
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getallproduct:
+    handler:
+      - apps/product.getAll
+    events:
+      - http:
+          path: product/getAll
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  #event
+  createevent:
+    handler:
+      - apps/event.create
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: event/create
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  updateevent:
+    handler:
+      - apps/event.update
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: event/update/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  deleteevent:
+    handler:
+      - apps/event.delete
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: event/delete/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getevent:
+    handler:
+      - apps/event.get
+    events:
+      - http:
+          path: event/get/{id}
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getallevent:
+    handler:
+      - apps/event.getAll
+    events:
+      - http:
+          path: event/getAll
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  spin:
+    handler:
+      - apps/event.spin
+    events:
+      - schedule: rate(1 minute)
+  #deal
+  createdeal:
+    handler:
+      - apps/deal.createDeal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: deal/create
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  usergetdeal:
+    handler:
+      - apps/deal.userGet
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: myevent/getAll
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  eventgetdeal:
+    handler:
+      - apps/deal.eventGet
+    events:
+      - http:
+          path: event/getAlldeal/{id}
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+
+
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    productTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: productsTable
+        AttributeDefinitions:
+          - AttributeName: productId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: productId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    eventTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: eventsTable
+        AttributeDefinitions:
+          - AttributeName: eventId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: eventId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    dealTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: dealsTable
+        AttributeDefinitions:
+          - AttributeName: dealId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: dealId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    rechangeTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: rechangeTable
+        AttributeDefinitions:
+          - AttributeName: rechangeId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: rechangeId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+plugins:
+  - serverless-offline
+  - serverless-middleware
