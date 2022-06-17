@@ -13,6 +13,7 @@ const fields = {
     userId: { type: String, default: uuid() },
     username: { type: String },
     password: { type: String },
+    address: { type: String },
     role: { type: String, default: 'user' },
     amout: { type: Number, default: 0 },
     fullname: { type: String, default: '' },
@@ -22,7 +23,17 @@ const fields = {
     createdAt: { type: Date, default: new Date().toISOString() },
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
+const rechangeFields = {
+    rechangeId: { type: String, default: uuid() },
+    userId: { type: String },
+    bankName: { type: String },
+    amout: { type: Number },
+    code: { type: String },
+    bankAccount: { type: String },
+    bankAccountNumber: { type: String }
+}
 const TableName = process.env.USER_TABLE;
+const RechangeTable = process.env.RECHANGE_TABLE
 module.exports.register = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
     let reqBody = JSON.parse(event.body);
@@ -156,6 +167,75 @@ module.exports.update = async (event, context, callback) => {
 
 };
 
-// module.exports.rechange = async (event, context, callback) => {
+module.exports.rechange = async (event, context, callback) => {
 
-// };
+    let user = context.prev;
+
+    let data = JSON.parse(event.body);
+    console.log(data)
+    data = convertData(rechangeFields, data)
+    return db.put({
+        TableName: RechangeTable,
+        Item: {
+            userId: user.userId,
+            bankName: data.bankName,
+            amout: data.amout,
+            rechangeId: data.rechangeId,
+            code: data.code,
+            bankAccount: data.bankAccount,
+            bankAccountNumber: data.bankAccountNumber
+        },
+    }).promise().then(res => {
+        return db.scan({
+            TableName: TableName,
+            FilterExpression: '#userId = :userId',
+            ExpressionAttributeNames: {
+                '#userId': 'userId',
+            },
+            ExpressionAttributeValues: {
+                ':userId': user.userId,
+            },
+        }).promise().then(res => {
+            return db.update({
+                TableName: TableName,
+                Key: {
+                    userId: user.userId,
+                },
+                UpdateExpression: 'set #amout = :amout',
+                ExpressionAttributeNames: {
+                    "#amout": "amout"
+                },
+                ExpressionAttributeValues: {
+                    ":amout": res.Items[0].amout + data.amout,
+                },
+            }).promise().then(res => {
+                return response("", "success", 200)
+            }).catch(err => {
+                return response(err, "rechange unsuccess", 500)
+            })
+        }).catch(err => {
+            return response(err, "user invalid", 500)
+        })
+
+    }).catch(err => {
+        return response(err, "rechange unsuccess", 500)
+    })
+};
+
+module.exports.getInfomation = async (event, context, callback) => {
+    let user = context.prev;
+    return db.scan({
+        TableName: TableName,
+        FilterExpression: '#userId = :userId',
+        ExpressionAttributeNames: {
+            '#userId': 'userId',
+        },
+        ExpressionAttributeValues: {
+            ':userId': user.userId,
+        },
+    }).promise().then(res => {
+        return response(res.Items[0], "success", 200)
+    }).catch(err => {
+        return response(err, "can't get user Infomation")
+    })
+};

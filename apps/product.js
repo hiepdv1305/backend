@@ -7,6 +7,7 @@ const fields = {
     productId: { type: String, default: uuid() },
     productName: { type: String },
     description: { type: String, default: '' },
+    category: { type: String },
     image: { type: String },
     status: { type: String, default: 'active' },
     price: { type: Number },
@@ -56,7 +57,6 @@ module.exports.get = async (event, context, callback) => {
             ExpressionAttributeValues: {
                 ':productId': id,
             },
-            Limit: 1
         }
     ).promise()
         .then((res) => {

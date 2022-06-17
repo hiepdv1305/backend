@@ -9,6 +9,7 @@ const fields = {
     productId: { type: String },
     eventName: { type: String },
     description: { type: String, default: '' },
+    category: { type: String },
     image: { type: String },
     status: { type: String, default: 'active' },
     price: { type: Number },

@@ -79,6 +79,30 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  rechange:
+    handler: apps/user.rechange
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/rechange
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getinfomation:
+    handler: apps/user.getInfomation
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/getinfomation
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   #product
   createproduct:
     handler:
