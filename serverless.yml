@@ -231,7 +231,7 @@ functions:
   #deal
   createdeal:
     handler:
-      - apps/deal.createDeal
+      - apps/deal.create
     middleware:
       pre:
         - middleware/authenication.isAuth

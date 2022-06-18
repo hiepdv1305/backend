@@ -94,7 +94,7 @@ module.exports.get = async (event, context, callback) => {
     ).promise()
         .then((res) => {
             if (res.Count == 0) return response("", "event not exist or finished", 400)
-            return response(res, "success", 200)
+            return response(res.Items[0], "success", 200)
         })
         .catch((err) => {
             return response("", "server error", 500)

@@ -124,7 +124,6 @@ module.exports.getNotification = async (event, context, callback) => {
 
 module.exports.update = async (event, context, callback) => {
     let user = context.prev;
-    const id = event.pathParameters.id;
     return db.scan({
         TableName: TableName,
         FilterExpression: '#userId = :userId',
