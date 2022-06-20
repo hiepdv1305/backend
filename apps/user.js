@@ -117,7 +117,9 @@ module.exports.getNotification = async (event, context, callback) => {
     };
     return s3.getObject(params).promise().then(res => {
         console.log(res.Body.toString("utf-8"));
-        return response(res.Body.toString("utf-8"), "success", 200);
+        return response(JSON.parse(res.Body.toString("utf-8")), "success", 200);
+    }).catch(err => {
+        return response(err, "Bạn không có thông báo nào", 500)
     });
 
 };
@@ -223,17 +225,13 @@ module.exports.rechange = async (event, context, callback) => {
 
 module.exports.getInfomation = async (event, context, callback) => {
     let user = context.prev;
-    return db.scan({
+    return db.get({
         TableName: TableName,
-        FilterExpression: '#userId = :userId',
-        ExpressionAttributeNames: {
-            '#userId': 'userId',
-        },
-        ExpressionAttributeValues: {
-            ':userId': user.userId,
+        Key: {
+            userId: user.userId,
         },
     }).promise().then(res => {
-        return response(res.Items[0], "success", 200)
+        return response(res.Item, "success", 200)
     }).catch(err => {
         return response(err, "can't get user Infomation")
     })

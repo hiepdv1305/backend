@@ -13,6 +13,7 @@ const fields = {
     username: { type: String },
     eventName: { type: String },
     image: { type: String },
+    eventPrice: { type: Number },
     price: { type: Number },
     beginNumber: { type: Number },
     endNumber: { type: Number },

@@ -15,12 +15,14 @@ const fields = {
     price: { type: Number },
     currentPoint: { type: Number, default: 0 },
     totalPoint: { type: Number },
+    winnerNumber: { type: Number, default: 0 },
     winner: { type: String, default: null },
     createdAt: { type: Date, default: new Date().toISOString() },
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
 // const axios = require("axios");
 const TableName = process.env.EVENT_TABLE;
+const dealTable = process.env.DEAL_TABLE
 module.exports.create = async (event, context, callback) => {
     // let user = context.jwtDecoded;
     let user = context.prev;
@@ -123,7 +125,6 @@ module.exports.getAll = async (event, context, callback) => {
 };
 
 module.exports.spin = async (event, context, callback) => {
-    console.log(1)
     const params = {
         TableName: TableName,
         FilterExpression: '#status = :status',
@@ -137,11 +138,11 @@ module.exports.spin = async (event, context, callback) => {
     db.scan(params)
         .promise()
         .then((res) => {
-            // console.log(res.Items)
+            console.log(res.Items)
             res.Items.forEach(r => {
                 if (r.currentPoint / r.totalPoint >= 0.5) {
-                    console.log(1)
                     const id = r.eventId;
+                    // console.log(id)
                     db.scan(
                         {
                             TableName: dealTable,
@@ -155,29 +156,38 @@ module.exports.spin = async (event, context, callback) => {
                         }
                     ).promise()
                         .then((result) => {
+                            // console.log(result)
                             var kq = Math.floor(Math.random() * r.currentPoint);
                             result.Items.forEach(item => {
                                 if (kq > item.beginNumber && kq < item.endNumber) {
                                     addNotification(item.userId, {
                                         eventId: r.eventId,
-                                        content: 'ban la nguoi chien thang'
+                                        content: 'Bạn là người chiến thắng sự kiện' + r.eventName + 'với con số may mắn' + kq
                                     })
+                                    console.log(item.userId)
                                     db.update({
                                         TableName: TableName,
                                         Key: {
                                             eventId: id,
                                         },
-                                        UpdateExpression: 'set #winner = :winner, #status = :status',
+                                        UpdateExpression: 'set #winner = :winner, #status = :status, #winnerNumber = :winnerNumber',
                                         ExpressionAttributeNames: {
                                             "#winner": "winner",
-                                            "#status": "status"
+                                            "#status": "status",
+                                            "#winnerNumber": "winnerNumber"
                                         },
                                         ExpressionAttributeValues: {
-                                            ":winner": item.userId,
-                                            ":status": "finish"
+                                            ":winner": item.username,
+                                            ":status": "finish",
+                                            ":winnerNumber": kq
                                         },
                                     })
                                         .promise()
+                                } else {
+                                    addNotification(item.userId, {
+                                        eventId: r.eventId,
+                                        content: 'Sự kiện' + r.eventName + 'đã kết thúc với con số may mắn' + kq + '.Chúc bạn may mắn lần sau'
+                                    })
                                 }
                             })
                         })
