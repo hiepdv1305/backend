@@ -3,6 +3,7 @@ const { response } = require("../init/res");
 const db = require('../init/db');
 const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
+const { addNotification } = require('../init/addNotification')
 const TableName = process.env.DEAL_TABLE;
 const eventTable = process.env.EVENT_TABLE;
 const userTable = process.env.USER_TABLE
@@ -78,6 +79,11 @@ module.exports.create = async (event, context, callback) => {
                 TableName: TableName,
                 Item: data
             }).promise().then(res => {
+                addNotification(user.userId, {
+                    eventId: data.eventId,
+                    content: 'Bạn đã mua thành công ' + data.point + ' điểm trong sự kiện ' + data.eventName,
+                    image: data.image
+                })
                 return response("", "success", 200)
             })
         })

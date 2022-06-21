@@ -105,7 +105,7 @@ module.exports.login = async (event, context, callback) => {
 
 module.exports.getNotification = async (event, context, callback) => {
     let user = context.prev;
-    console.log(user)
+    // console.log(user)
     let key = 'notification' + user.userId;
     key = md5(key);
     let params = {
@@ -116,7 +116,7 @@ module.exports.getNotification = async (event, context, callback) => {
         )}/${key.slice(4, 6)}/${key.slice(6)}.json`,
     };
     return s3.getObject(params).promise().then(res => {
-        console.log(res.Body.toString("utf-8"));
+        // console.log(res.Body.toString("utf-8"));
         return response(JSON.parse(res.Body.toString("utf-8")), "success", 200);
     }).catch(err => {
         return response(err, "Bạn không có thông báo nào", 500)

@@ -138,7 +138,7 @@ module.exports.spin = async (event, context, callback) => {
     db.scan(params)
         .promise()
         .then((res) => {
-            console.log(res.Items)
+            // console.log(res.Items)
             res.Items.forEach(r => {
                 if (r.currentPoint / r.totalPoint >= 0.5) {
                     const id = r.eventId;
@@ -156,13 +156,13 @@ module.exports.spin = async (event, context, callback) => {
                         }
                     ).promise()
                         .then((result) => {
-                            // console.log(result)
                             var kq = Math.floor(Math.random() * r.currentPoint);
                             result.Items.forEach(item => {
                                 if (kq > item.beginNumber && kq < item.endNumber) {
                                     addNotification(item.userId, {
                                         eventId: r.eventId,
-                                        content: 'Bạn là người chiến thắng sự kiện' + r.eventName + 'với con số may mắn' + kq
+                                        content: 'Chúc mừng bạn là người chiến thắng sự kiện ' + r.eventName + ' với con số may mắn ' + kq,
+                                        image: r.image
                                     })
                                     console.log(item.userId)
                                     db.update({
@@ -184,9 +184,11 @@ module.exports.spin = async (event, context, callback) => {
                                     })
                                         .promise()
                                 } else {
+                                    console.log(1)
                                     addNotification(item.userId, {
                                         eventId: r.eventId,
-                                        content: 'Sự kiện' + r.eventName + 'đã kết thúc với con số may mắn' + kq + '.Chúc bạn may mắn lần sau'
+                                        content: 'Sự kiện ' + r.eventName + ' đã kết thúc với con số may mắn ' + kq + '.Chúc bạn may mắn lần sau',
+                                        image: r.image
                                     })
                                 }
                             })
