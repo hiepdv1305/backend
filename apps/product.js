@@ -11,6 +11,7 @@ const fields = {
     image: { type: String },
     status: { type: String, default: 'active' },
     price: { type: Number },
+    quantity: { type: Number },
     createdAt: { type: Date, default: new Date().toISOString() },
     updatedAt: { type: Date, default: new Date().toISOString() }
 };

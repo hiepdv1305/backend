@@ -9,7 +9,7 @@ custom:
     EVENT_TABLE: eventsTable
     DEAL_TABLE: dealsTable
     RECHANGE_TABLE: rechangeTable
-
+    WINNER_TABLE: winnerTable
 provider:
   name: aws
   runtime: nodejs12.x
@@ -31,6 +31,7 @@ provider:
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.EVENT_TABLE}"
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DEAL_TABLE}"
         - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.RECHANGE_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.WINNER_TABLE}"
 
 
 functions:
@@ -266,7 +267,17 @@ functions:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
 
-
+#winner
+  getallwinner:
+    handler:
+      - apps/winner.getAll
+    events:
+      - http:
+          path: winner/getAll
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
 resources: # CloudFormation template syntax from here on.
   Resources:
     usersTable:
@@ -330,6 +341,19 @@ resources: # CloudFormation template syntax from here on.
             AttributeType: S
         KeySchema:
           - AttributeName: rechangeId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    winnerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: winnerTable
+        AttributeDefinitions:
+          - AttributeName: winnerId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: winnerId
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1

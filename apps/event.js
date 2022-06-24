@@ -4,15 +4,18 @@ const db = require('../init/db');
 const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
+const winner = require('./winner')
 const fields = {
     eventId: { type: String, default: uuid() },
     productId: { type: String },
     eventName: { type: String },
+    productName: { type: String },
     description: { type: String, default: '' },
     category: { type: String },
     image: { type: String },
     status: { type: String, default: 'active' },
     price: { type: Number },
+    phien: { type: Number },
     currentPoint: { type: Number, default: 0 },
     totalPoint: { type: Number },
     winnerNumber: { type: Number, default: 0 },
@@ -22,7 +25,8 @@ const fields = {
 };
 // const axios = require("axios");
 const TableName = process.env.EVENT_TABLE;
-const dealTable = process.env.DEAL_TABLE
+const dealTable = process.env.DEAL_TABLE;
+const productTable = process.env.PRODUCT_TABLE;
 module.exports.create = async (event, context, callback) => {
     // let user = context.jwtDecoded;
     let user = context.prev;
@@ -49,6 +53,37 @@ module.exports.create = async (event, context, callback) => {
 
     }
 
+};
+
+module.exports.createEvent = async (item) => {
+    console.log(item)
+    db.get({
+        TableName: productTable,
+        Key: {
+            productId: item.productId,
+        },
+    }).promise().then(res => {
+        if (res.Item.quantity > 0) {
+            let data = {}
+            if (new Date(item.createdAt).getDate() === new Date().getDate()) {
+                data.eventName = 'Phiên ' + (data.phien + 1) + '-' + new Date().toISOString() + ':' + data.productName;
+                data.phien += 1;
+                data = convertData(fields, data)
+                // console.log(data)
+            } else {
+                data.eventName = 'Phiên 1 - ' + new Date().toISOString() + ':' + data.productName;
+                data.phien = 1;
+                data = convertData(fields, data)
+                // console.log(data)
+            }
+            return db.put(
+                {
+                    TableName: TableName,
+                    Item: data,
+                }
+            ).promise()
+        }
+    })
 };
 
 module.exports.delete = async (event, context, callback) => {
@@ -157,14 +192,24 @@ module.exports.spin = async (event, context, callback) => {
                     ).promise()
                         .then((result) => {
                             var kq = Math.floor(Math.random() * r.currentPoint);
-                            result.Items.forEach(item => {
+                            result.Items.forEach(async (item) => {
                                 if (kq > item.beginNumber && kq < item.endNumber) {
-                                    addNotification(item.userId, {
+                                    await addNotification(item.userId, {
                                         eventId: r.eventId,
                                         content: 'Chúc mừng bạn là người chiến thắng sự kiện ' + r.eventName + ' với con số may mắn ' + kq,
                                         image: r.image
+                                    });
+                                    winner.push({
+                                        eventId: r.eventId,
+                                        userId: item.userId,
+                                        username: item.username,
+                                        eventName: r.eventName,
+                                        image: r.image,
+                                        eventPrice: r.price,
+                                        point: item.point,
+                                        result: kq
                                     })
-                                    console.log(item.userId)
+                                    // console.log(item.userId)
                                     db.update({
                                         TableName: TableName,
                                         Key: {
@@ -184,8 +229,8 @@ module.exports.spin = async (event, context, callback) => {
                                     })
                                         .promise()
                                 } else {
-                                    console.log(1)
-                                    addNotification(item.userId, {
+                                    // console.log(1)
+                                    await addNotification(item.userId, {
                                         eventId: r.eventId,
                                         content: 'Sự kiện ' + r.eventName + ' đã kết thúc với con số may mắn ' + kq + '.Chúc bạn may mắn lần sau',
                                         image: r.image
@@ -196,6 +241,9 @@ module.exports.spin = async (event, context, callback) => {
                         .catch((err) => {
                             console.log(err)
                         })
+                    // console.log(new Date().getDate - new Date(r.createdAt).getDate())
+                    console.log(r)
+                    this.createEvent(r)
                 }
             });
         })

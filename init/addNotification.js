@@ -17,8 +17,8 @@ module.exports.addNotification = async (userId, data) => {
             let source = [];
             if (JSON.parse(res.Body.toString("utf-8")).length > 1) {
                 source = JSON.parse(res.Body.toString("utf-8"))
-                console.log(source)
-                source.push(data)
+                // console.log(source)
+                source.unshift(data)
                 let params = {
                     Bucket: `apptmdt`,
                     Key: `notification/${key.slice(0, 2)}/${key.slice(
@@ -27,16 +27,10 @@ module.exports.addNotification = async (userId, data) => {
                     )}/${key.slice(4, 6)}/${key.slice(6)}.json`,
                     Body: JSON.stringify(source, null, 2),
                 };
-                s3.putObject(params, function (err, data) {
-                    if (err) {
-                        console.log("Error MSG : ", err);
-                    } else {
-                        console.log("successFully upload data", data);
-                    }
-                }).promise()
+                s3.putObject(params).promise()
             } else {
                 source.push(JSON.parse(res.Body.toString("utf-8")))
-                source.push(data)
+                source.unshift(data)
                 let params = {
                     Bucket: `apptmdt`,
                     Key: `notification/${key.slice(0, 2)}/${key.slice(
