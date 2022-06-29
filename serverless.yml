@@ -278,6 +278,19 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  reward: 
+    handler:
+      - apps/winner.reward
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: winner/reward
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
 resources: # CloudFormation template syntax from here on.
   Resources:
     usersTable:

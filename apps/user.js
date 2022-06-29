@@ -236,3 +236,30 @@ module.exports.getInfomation = async (event, context, callback) => {
         return response(err, "can't get user Infomation")
     })
 };
+
+module.exports.increaseAccount = async (event, context, callback) => {
+    const item = JSON.parse(event.body);
+    let user = context.prev;
+    return db.get({
+        TableName: TableName,
+        Key: {
+            userId: user.userId,
+        },
+    }).promise().then(res => {
+        db.update({
+            TableName: TableName,
+            Key: {
+                userId: user.userId,
+            },
+            UpdateExpression: 'set #amout = :amout',
+            ExpressionAttributeNames: {
+                "#amout": "amout"
+            },
+            ExpressionAttributeValues: {
+                ":amout": res.Item.amout + item.money,
+            },
+        })
+    }).catch(err => {
+        return response(err, "can't get user Infomation")
+    })
+};

@@ -66,22 +66,51 @@ module.exports.createEvent = async (item) => {
         if (res.Item.quantity > 0) {
             let data = {}
             if (new Date(item.createdAt).getDate() === new Date().getDate()) {
-                data.eventName = 'Phiên ' + (data.phien + 1) + '-' + new Date().toISOString() + ':' + data.productName;
-                data.phien += 1;
+                data.eventName = 'Phiên ' + (item.phien + 1) + '-' + new Date().getDate() + (new Date().getMonth() + 1) + new Date().getUTCFullYear() + ': ' + item.productName;
+                data.price = item.price
+                data.description = item.description
+                data.image = item.image
+                data.productName = item.productName
+                data.productId = item.productId
+                data.totalPoint = item.totalPoint
+                data.category = item.category
+                data.phien = item.phien + 1;
                 data = convertData(fields, data)
                 // console.log(data)
             } else {
-                data.eventName = 'Phiên 1 - ' + new Date().toISOString() + ':' + data.productName;
+                data.eventName = 'Phiên 1 - ' + new Date().getDate() + (new Date().getMonth() + 1) + new Date().getUTCFullYear() + ': ' + item.productName;
+                data.price = item.price
+                data.description = item.description
+                data.image = item.image
+                data.productId = item.productId
+                data.productName = item.productName
+                data.totalPoint = item.totalPoint
+                data.category = item.category
                 data.phien = 1;
                 data = convertData(fields, data)
                 // console.log(data)
             }
+            db.update({
+                TableName: productTable,
+                Key: {
+                    productId: item.productId,
+                },
+                UpdateExpression: 'set #quantity = :quantity',
+                ExpressionAttributeNames: {
+                    "#quantity": "quantity"
+                },
+                ExpressionAttributeValues: {
+                    ":quantity": res.Item.quantity - 1,
+                },
+            })
+                .promise()
             return db.put(
                 {
                     TableName: TableName,
                     Item: data,
                 }
             ).promise()
+
         }
     })
 };
@@ -176,8 +205,9 @@ module.exports.spin = async (event, context, callback) => {
             // console.log(res.Items)
             res.Items.forEach(r => {
                 if (r.currentPoint / r.totalPoint >= 0.5) {
+                    // console.log(r)
+                    this.createEvent(r)
                     const id = r.eventId;
-                    // console.log(id)
                     db.scan(
                         {
                             TableName: dealTable,
@@ -242,8 +272,6 @@ module.exports.spin = async (event, context, callback) => {
                             console.log(err)
                         })
                     // console.log(new Date().getDate - new Date(r.createdAt).getDate())
-                    console.log(r)
-                    this.createEvent(r)
                 }
             });
         })
