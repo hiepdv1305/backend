@@ -28,9 +28,12 @@ const rechangeFields = {
     userId: { type: String },
     bankName: { type: String },
     amout: { type: Number },
+    status: { type: String, default: 'waiting' },
     code: { type: String },
     bankAccount: { type: String },
-    bankAccountNumber: { type: String }
+    bankAccountNumber: { type: String },
+    createdAt: { type: Date, default: new Date().toISOString() },
+    updatedAt: { type: Date, default: new Date().toISOString() }
 }
 const TableName = process.env.USER_TABLE;
 const RechangeTable = process.env.RECHANGE_TABLE
@@ -173,51 +176,13 @@ module.exports.rechange = async (event, context, callback) => {
     let user = context.prev;
 
     let data = JSON.parse(event.body);
-    console.log(data)
+    data.userId = user.userId
     data = convertData(rechangeFields, data)
     return db.put({
         TableName: RechangeTable,
-        Item: {
-            userId: user.userId,
-            bankName: data.bankName,
-            amout: data.amout,
-            rechangeId: data.rechangeId,
-            code: data.code,
-            bankAccount: data.bankAccount,
-            bankAccountNumber: data.bankAccountNumber
-        },
+        Item: data
     }).promise().then(res => {
-        return db.scan({
-            TableName: TableName,
-            FilterExpression: '#userId = :userId',
-            ExpressionAttributeNames: {
-                '#userId': 'userId',
-            },
-            ExpressionAttributeValues: {
-                ':userId': user.userId,
-            },
-        }).promise().then(res => {
-            return db.update({
-                TableName: TableName,
-                Key: {
-                    userId: user.userId,
-                },
-                UpdateExpression: 'set #amout = :amout',
-                ExpressionAttributeNames: {
-                    "#amout": "amout"
-                },
-                ExpressionAttributeValues: {
-                    ":amout": res.Items[0].amout + data.amout,
-                },
-            }).promise().then(res => {
-                return response("", "success", 200)
-            }).catch(err => {
-                return response(err, "rechange unsuccess", 500)
-            })
-        }).catch(err => {
-            return response(err, "user invalid", 500)
-        })
-
+        return response("", "create rechange success", 200)
     }).catch(err => {
         return response(err, "rechange unsuccess", 500)
     })
@@ -261,5 +226,163 @@ module.exports.increaseAccount = async (event, context, callback) => {
         })
     }).catch(err => {
         return response(err, "can't get user Infomation")
+    })
+};
+
+module.exports.changePassword = async (event, context, callback) => {
+    const data = JSON.parse(event.body);
+    let user = context.prev;
+    return db.get({
+        TableName: TableName,
+        Key: {
+            userId: user.userId,
+        },
+    }).promise().then(res => {
+        if (bcrypt.compareSync(data.oldPassword, res.Item.password)) {
+            let salt = bcrypt.genSaltSync(10);
+            return db.update({
+                TableName: TableName,
+                Key: {
+                    userId: user.userId,
+                },
+                UpdateExpression: 'set #password = :password',
+                ExpressionAttributeNames: {
+                    "#password": "password"
+                },
+                ExpressionAttributeValues: {
+                    ":password": bcrypt.hashSync(data.newPassword, salt),
+                },
+            }).promise().then(res => {
+                return response("", "Thay đổi mật khẩu thành công", 200);
+            })
+        } else {
+            return response("", "Mật khẩu cũ không chính xác", 500)
+        }
+    }).catch(err => {
+        console.log(err)
+        return response(err, "can't get user Infomation", 500);
+
+    })
+};
+module.exports.acceptRechange = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != 'admin') return response("", "not permistion", 500);
+    const rechangeId = event.pathParameters.id;
+    return db.get({
+        TableName: RechangeTable,
+        Key: {
+            rechangeId: rechangeId,
+        },
+    }).promise().then(res => {
+        if (res.Item.status != 'waiting') return response("", "invalid", 500)
+        let amout = res.Item.amout
+        return db.get({
+            TableName: TableName,
+            Key: {
+                userId: res.Item.userId,
+            },
+        }).promise().then(res => {
+            return db.update({
+                TableName: TableName,
+                Key: {
+                    userId: res.Item.userId,
+                },
+                UpdateExpression: 'set #amout = :amout',
+                ExpressionAttributeNames: {
+                    "#amout": "amout"
+                },
+                ExpressionAttributeValues: {
+                    ":amout": res.Item.amout + amout,
+                },
+            }).promise().then(res => {
+                return db.update({
+                    TableName: RechangeTable,
+                    Key: {
+                        rechangeId: rechangeId,
+                    },
+                    UpdateExpression: 'set #status = :status',
+                    ExpressionAttributeNames: {
+                        "#status": "status"
+                    },
+                    ExpressionAttributeValues: {
+                        ":status": 'success',
+                    },
+                }).promise().then(res => {
+                    return response("", "success", 200)
+                }).catch(err => {
+                    return response(err, "can't update rechange status")
+                })
+            }).catch(err => {
+                return response(err, "rechange unsuccess", 500)
+            })
+        }).catch(err => {
+            return response(err, "can't get user", 500)
+        })
+
+
+    }).catch(err => {
+        return response(err, "rechange unsuccess", 500)
+    })
+};
+module.exports.getAllRechange = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != 'admin') return response("", "not permistion", 500);
+    const params = {
+        TableName: RechangeTable,
+        FilterExpression: '#status = :status',
+        ExpressionAttributeNames: {
+            '#status': 'status',
+        },
+        ExpressionAttributeValues: {
+            ':status': "waiting",
+        },
+    }
+    return db.scan(params)
+        .promise()
+        .then((res) => {
+            return response(res.Items, "success", 200)
+        })
+        .catch((err) => {
+            return response("", err, 500)
+        })
+};
+module.exports.denniRechange = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != 'admin') return response("", "not permistion", 500);
+    const rechangeId = event.pathParameters.id;
+
+    return db.update({
+        TableName: RechangeTable,
+        Key: {
+            rechangeId: rechangeId,
+        },
+        UpdateExpression: 'set #status = :status',
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":status": 'denni',
+        },
+    }).promise().then(res => {
+        return response("", "success", 200)
+    }).catch(err => {
+        return response(err, "can't update rechange status")
+    })
+
+};
+module.exports.withdrawal = async (event, context, callback) => {
+
+    let user = context.prev;
+
+    let data = JSON.parse(event.body);
+    data.userId = user.userId
+    data = convertData(rechangeFields, data)
+    return db.put({
+        TableName: RechangeTable,
+        Item: data
+    }).promise().then(res => {
+        return response("", "create rechange success", 200)
+    }).catch(err => {
+        return response(err, "rechange unsuccess", 500)
     })
 };

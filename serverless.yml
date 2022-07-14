@@ -104,6 +104,54 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  changepassword:
+    handler: apps/user.changePassword
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/changePassword
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  acceptrechange:
+    handler: apps/user.acceptRechange
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/acceptRechange/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  dennirechange:
+    handler: apps/user.denniRechange
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/denniRechange/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getallrechange:
+    handler: apps/user.getAllRechange
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/getAllRechange
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   #product
   createproduct:
     handler:
