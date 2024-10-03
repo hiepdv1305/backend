@@ -3,36 +3,59 @@ frameworkVersion: '3'
 
 custom:
   settings:
-    origin: "http://localhost:8080"
+    origin: "*"
+    # db off
+    DBURL: "mongodb://18.143.112.122:27017"
+    # db online
+    # DBURL: "mongodb://172.31.3.25:27017"
+    #test-db
+    # DBURL: "mongodb://172.31.3.197:27017"
+    DB: "tmdt"
+    BUCKET: "cococas-product"
+    # origin: "*"
     USER_TABLE: usersTable
     PRODUCT_TABLE: productsTable
     EVENT_TABLE: eventsTable
     DEAL_TABLE: dealsTable
     RECHANGE_TABLE: rechangeTable
     WINNER_TABLE: winnerTable
+    WITHDRAWAL_TABLE: withdrawalTable
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   region: us-east-1
   environment: ${self:custom.settings}
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource:
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.USER_TABLE}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.PRODUCT_TABLE}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.EVENT_TABLE}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DEAL_TABLE}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.RECHANGE_TABLE}"
-        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.WINNER_TABLE}"
-
+        - "s3:*"
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+        # - dynamodb:DescribeTable
+        # - dynamodb:Query
+        # - dynamodb:Scan
+        # - dynamodb:GetItem
+        # - dynamodb:PutItem
+        # - dynamodb:UpdateItem
+        # - dynamodb:DeleteItem
+      Resource: "*"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.USER_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.PRODUCT_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.EVENT_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DEAL_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.RECHANGE_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.WINNER_TABLE}"
+        # - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.WITHDRAWAL_TABLE}"
+  vpc:
+    securityGroupIds:
+      - sg-0b17b7809d293d67e
+      # - sg-020a485b5c4ca71d6
+    subnetIds:
+      - subnet-06ea287115df597d4
+      - subnet-0a724e2e69d8b6708
+      # - subnet-09244605db2af5f99
+      # - subnet-0b422389a37226966
 
 functions:
   hello:
@@ -104,6 +127,18 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  getalluser:
+    handler: apps/user.getAllUser
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/getalluser
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   changepassword:
     handler: apps/user.changePassword
     middleware:
@@ -152,6 +187,54 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  withdrawal:
+    handler: apps/user.withdrawal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/withdrawal
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  acceptwithdrawal:
+    handler: apps/user.acceptWithdrawal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/acceptWithdrawal/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  denniwithdrawal:
+    handler: apps/user.denniWithdrawal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/denniWithdrawal/{id}
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  getallwithdrawal:
+    handler: apps/user.getAllWithdrawal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/getAllWithdrawal
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   #product
   createproduct:
     handler:
@@ -188,7 +271,7 @@ functions:
     events:
       - http:
           path: product/delete/{id}
-          method: put
+          method: delete
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
@@ -248,7 +331,7 @@ functions:
     events:
       - http:
           path: event/delete/{id}
-          method: put
+          method: delete
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
@@ -267,7 +350,7 @@ functions:
       - apps/event.getAll
     events:
       - http:
-          path: event/getAll
+          path: event/get
           method: get
           cors:
             origin: ${self:custom.settings.origin}
@@ -415,6 +498,19 @@ resources: # CloudFormation template syntax from here on.
             AttributeType: S
         KeySchema:
           - AttributeName: winnerId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    withdrawalTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: withdrawalTable
+        AttributeDefinitions:
+          - AttributeName: withdrawalId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: withdrawalId
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1

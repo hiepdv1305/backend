@@ -1,14 +1,22 @@
 'use strict';
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const uri = process.env.DBURL;
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1,
+});
+const db = process.env.DB
+const deal_table = "deal"
+const event_table = "event"
+const user_table = "user"
 const { response } = require("../init/res");
-const db = require('../init/db');
+const { create_balance_fluctuation } = require("./balance_fluctuation")
 const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
-const TableName = process.env.DEAL_TABLE;
-const eventTable = process.env.EVENT_TABLE;
-const userTable = process.env.USER_TABLE
+
 const fields = {
-    dealId: { type: String, default: uuid() },
     eventId: { type: String },
     userId: { type: String },
     username: { type: String },
@@ -24,68 +32,36 @@ const fields = {
 };
 module.exports.create = async (event, context, callback) => {
     let user = context.prev;
-    console.log(user)
+    // console.log(user)
+    const event_table_ = client.db(db).collection(event_table);
+    const deal_table_ = client.db(db).collection(deal_table);
     let data = JSON.parse(event.body);
-    return db.get({
-        TableName: userTable,
-        Key: {
-            userId: user.userId,
-        },
-    }).promise().then(res => {
-        if (res.Item.amout < data.price) return response("", "Số dư tài khoản không đủ để thực hiện giao dịch", 500)
-        console.log(res)
-        db.update({
-            TableName: userTable,
-            Key: {
-                userId: user.userId,
-            },
-            UpdateExpression: 'set #amout = :amout',
-            ExpressionAttributeNames: {
-                "#amout": "amout"
-            },
-            ExpressionAttributeValues: {
-                ":amout": res.Item.amout - data.price,
-            },
-        }).promise()
-        return db.get({
-            TableName: eventTable,
-            Key: {
-                eventId: data.eventId,
-            },
-        }).promise().then(res => {
-            console.log(res)
-            if (res.Item.currentPoint + data.point > res.Item.totalPoint) return response("", "Số điểm vượt quá số lượng còn lại", 500)
-            db.update({
-                TableName: eventTable,
-                Key: {
-                    eventId: data.eventId,
-                },
-                UpdateExpression: 'set #currentPoint = :currentPoint',
-                ExpressionAttributeNames: {
-                    "#currentPoint": "currentPoint"
-                },
-                ExpressionAttributeValues: {
-                    ":currentPoint": res.Item.currentPoint + data.point,
-                },
-            }).promise()
-            console.log(res)
-            data.beginNumber = res.Item.currentPoint + 1
-            data.endNumber = res.Item.currentPoint + data.point
-            data.userId = user.userId
-            data.username = user.username
-            data = convertData(fields, data)
-            console.log(data)
-            return db.put({
-                TableName: TableName,
-                Item: data
-            }).promise().then(res => {
-                addNotification(user.userId, {
-                    eventId: data.eventId,
-                    content: 'Bạn đã mua thành công ' + data.point + ' điểm trong sự kiện ' + data.eventName,
-                    image: data.image
-                })
-                return response("", "success", 200)
-            })
+
+    let res = await create_balance_fluctuation(-data.price, `Thanh toan giao dich mua ${data.point} diem cua su kien ${data.eventName}`, user._id)
+    if (res == 2) return response("", "Tai khoan khong du so du de thanh toan", 402)
+    if (res == 0) return response("", "Giao dich xay ra loi", 403)
+    return event_table_.findOne({
+        _id: new ObjectId(data.eventId)
+    }).then(async res => {
+        // console.log(res)
+        if (res.currentPoint + data.point > res.totalPoint) return response("", "Số điểm vượt quá số lượng còn lại", 500)
+        await event_table_.updateOne(
+            { _id: new ObjectId(data.eventId) },
+            { $set: { currentPoint: res.currentPoint + data.point } }
+        )
+        data.beginNumber = res.currentPoint + 1
+        data.endNumber = res.currentPoint + data.point
+        data.userId = user._id
+        data.username = user.username
+        data = convertData(fields, data)
+        console.log(data)
+        return deal_table_.insertOne(data).then(res => {
+            // addNotification(user.userId, {
+            //     eventId: data.eventId,
+            //     content: 'Bạn đã mua thành công ' + data.point + ' điểm trong sự kiện ' + data.eventName,
+            //     image: data.image
+            // })
+            return response("", "success", 200)
         })
     })
 };
@@ -144,18 +120,12 @@ module.exports.createDeal = async (event, context, callback) => {
 };
 module.exports.eventGet = async (event, context, callback) => {
     const id = event.pathParameters.id;
-    return db.scan(
+    const deal_table_ = client.db(db).collection(deal_table);
+    return deal_table_.find(
         {
-            TableName: TableName,
-            FilterExpression: '#eventId = :eventId',
-            ExpressionAttributeNames: {
-                '#eventId': 'eventId',
-            },
-            ExpressionAttributeValues: {
-                ':eventId': id,
-            }
+            eventId: id
         }
-    ).promise()
+    ).toArray()
         .then((res) => {
             return response(res, "success", 200)
         })
@@ -166,18 +136,12 @@ module.exports.eventGet = async (event, context, callback) => {
 
 module.exports.userGet = async (event, context, callback) => {
     let user = context.prev;
-    return db.scan(
+    const deal_table_ = client.db(db).collection(deal_table);
+    return deal_table_.find(
         {
-            TableName: TableName,
-            FilterExpression: '#userId = :userId',
-            ExpressionAttributeNames: {
-                '#userId': 'userId',
-            },
-            ExpressionAttributeValues: {
-                ':userId': user.userId,
-            }
+            userId: user._id
         }
-    ).promise()
+    ).toArray()
         .then((res) => {
             return response(res, "success", 200)
         })
