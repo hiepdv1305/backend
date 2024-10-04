@@ -31,7 +31,7 @@ const fields = {
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
 const rechangeFields = {
-    rechangeId: { type: String, default: uuid() },
+    rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
     userId: { type: String },
     bankName: { type: String },
     amout: { type: Number },
