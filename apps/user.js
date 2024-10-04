@@ -2,7 +2,7 @@
 const { response } = require("../init/res");
 const bcrypt = require("bcryptjs");
 const db = require('../init/db');
-const { uuid } = require("uuidv4");
+const crypto = require('crypto');
 const { convertData } = require("../init/convertData")
 const aws = require("aws-sdk");
 const s3 = new aws.S3();
@@ -10,7 +10,7 @@ var md5 = require("md5");
 const jwtHelper = require('../init/jwt')
 const config = require("../Config/config")
 const fields = {
-    userId: { type: String, default: uuid() },
+    userId: { type: String, default: crypto.randomBytes(16).toString('hex') },
     username: { type: String },
     password: { type: String },
     address: { type: String },
@@ -24,7 +24,7 @@ const fields = {
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
 const rechangeFields = {
-    rechangeId: { type: String, default: uuid() },
+    rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
     userId: { type: String },
     bankName: { type: String },
     amout: { type: Number },
