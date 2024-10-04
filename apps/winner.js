@@ -1,13 +1,12 @@
 'use strict';
 const { response } = require("../init/res");
 const db = require('../init/db');
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
 const TableName = process.env.WINNER_TABLE;
 const userTable = process.env.USER_TABLE;
 const fields = {
-    winnerId: { type: String, default: uuid() },
+    // winnerId: { type: String, default: uuid() },
     userId: { type: String },
     username: { type: String },
     eventId: { type: String },

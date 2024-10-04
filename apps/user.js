@@ -10,7 +10,6 @@ const db = process.env.DB
 const user_table = "user"
 const { response } = require("../init/res");
 const bcrypt = require("bcryptjs");
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const aws = require("aws-sdk");
 const s3 = new aws.S3();
@@ -31,7 +30,7 @@ const fields = {
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
 const rechangeFields = {
-    rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
+    // rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
     userId: { type: String },
     bankName: { type: String },
     amout: { type: Number },
@@ -43,7 +42,7 @@ const rechangeFields = {
     updatedAt: { type: Date, default: new Date().toISOString() }
 }
 const withdrawalFields = {
-    withdrawalId: { type: String, default: uuid() },
+    // withdrawalId: { type: String, default: uuid() },
     userId: { type: String },
     bankName: { type: String },
     amout: { type: Number },
@@ -204,7 +203,7 @@ module.exports.changePassword = async (event, context, callback) => {
 };
 module.exports.getAllUser = async (event, context, callback) => {
     let user = context.prev;
-    console.log(user)
+    // console.log(user)
     const user_table_ = client.db(db).collection(user_table);
     if(user.role == "admin"){
         return user_table_.find({

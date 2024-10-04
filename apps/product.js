@@ -9,7 +9,6 @@ const client = new MongoClient(uri, {
 const db = process.env.DB
 const product_table = "product"
 const { response } = require("../init/res");
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const fields = {
     productName: { type: String },
