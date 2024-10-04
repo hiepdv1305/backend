@@ -359,7 +359,13 @@ functions:
     handler:
       - apps/event.spin
     events:
-      - schedule: rate(1 minute)
+      # - schedule: rate(1 minute)
+      - http:
+          path: event/spin
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   #deal
   createdeal:
     handler:

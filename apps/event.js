@@ -9,6 +9,7 @@ const client = new MongoClient(uri, {
 const db = process.env.DB
 const event_table = "event"
 const product_table = "product"
+const deal_table = "deal"
 const { response } = require("../init/res");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
@@ -66,9 +67,9 @@ module.exports.createEvent = async (item) => {
     product_table_.findOne({
         _id: new ObjectId(item.productId)
     }).then(res => {
-        if (res.Item.quantity > 0) {
+        if (res.quantity > 0) {
             let data = {}
-            data.eventName = (new Date(item.createdAt).getDate() === new Date().getDate()) ? ('Phiên ' + (item.phien + 1) + '-' + new Date().getDate() + (new Date().getMonth() + 1) + new Date().getUTCFullYear() + ': ' + item.productName) : ('Phiên 1 - ' + new Date().getDate() + (new Date().getMonth() + 1) + new Date().getUTCFullYear() + ': ' + item.productName);
+            data.eventName = (new Date(item.createdAt).getDate() === new Date().getDate()) ? ('Phiên ' + (item.phien + 1) + '-' + new Date().getDate() + "/" + (new Date().getMonth() + 1) + "/" + new Date().getUTCFullYear() + ': ' + item.productName) : ('Phiên 1 - ' + new Date().getDate() + "/" + (new Date().getMonth() + 1) + "/" + new Date().getUTCFullYear() + ': ' + item.productName);
             data.price = item.price
             data.description = item.description
             data.image = item.image
@@ -86,7 +87,6 @@ module.exports.createEvent = async (item) => {
                 $set: { quantity: res.quantity - 1, }
             }
             )
-                .promise()
             return event_table_.insertOne(data)
 
         }
@@ -140,97 +140,85 @@ module.exports.getAll = async (event, context, callback) => {
         })
 };
 
-// module.exports.spin = async (event, context, callback) => {
-//     const params = {
-//         TableName: TableName,
-//         FilterExpression: '#status = :status',
-//         ExpressionAttributeNames: {
-//             '#status': 'status',
-//         },
-//         ExpressionAttributeValues: {
-//             ':status': "active",
-//         },
-//     }
-//     db.scan(params)
-//         .promise()
-//         .then((res) => {
-//             // console.log(res.Items)
-//             res.Items.forEach(r => {
-//                 if (r.currentPoint / r.totalPoint >= 0.5) {
-//                     // console.log(r)
-//                     this.createEvent(r)
-//                     const id = r.eventId;
-//                     db.scan(
-//                         {
-//                             TableName: dealTable,
-//                             FilterExpression: '#eventId = :eventId',
-//                             ExpressionAttributeNames: {
-//                                 '#eventId': 'eventId',
-//                             },
-//                             ExpressionAttributeValues: {
-//                                 ':eventId': id,
-//                             }
-//                         }
-//                     ).promise()
-//                         .then((result) => {
-//                             var kq = Math.floor(Math.random() * r.currentPoint);
-//                             result.Items.forEach(async (item) => {
-//                                 if (kq > item.beginNumber && kq < item.endNumber) {
-//                                     await addNotification(item.userId, {
-//                                         eventId: r.eventId,
-//                                         content: 'Chúc mừng bạn là người chiến thắng sự kiện ' + r.eventName + ' với con số may mắn ' + kq,
-//                                         image: r.image
-//                                     });
-//                                     winner.push({
-//                                         eventId: r.eventId,
-//                                         userId: item.userId,
-//                                         username: item.username,
-//                                         eventName: r.eventName,
-//                                         image: r.image,
-//                                         eventPrice: r.price,
-//                                         point: item.point,
-//                                         result: kq
-//                                     })
-//                                     // console.log(item.userId)
-//                                     db.update({
-//                                         TableName: TableName,
-//                                         Key: {
-//                                             eventId: id,
-//                                         },
-//                                         UpdateExpression: 'set #winner = :winner, #status = :status, #winnerNumber = :winnerNumber',
-//                                         ExpressionAttributeNames: {
-//                                             "#winner": "winner",
-//                                             "#status": "status",
-//                                             "#winnerNumber": "winnerNumber"
-//                                         },
-//                                         ExpressionAttributeValues: {
-//                                             ":winner": item.username,
-//                                             ":status": "finish",
-//                                             ":winnerNumber": kq
-//                                         },
-//                                     })
-//                                         .promise()
-//                                 } else {
-//                                     // console.log(1)
-//                                     await addNotification(item.userId, {
-//                                         eventId: r.eventId,
-//                                         content: 'Sự kiện ' + r.eventName + ' đã kết thúc với con số may mắn ' + kq + '.Chúc bạn may mắn lần sau',
-//                                         image: r.image
-//                                     })
-//                                 }
-//                             })
-//                         })
-//                         .catch((err) => {
-//                             console.log(err)
-//                         })
-//                     // console.log(new Date().getDate - new Date(r.createdAt).getDate())
-//                 }
-//             });
-//         })
-//     // .catch((err) => {
-//     //     return response("", err, 500)
-//     // })
-// };
+module.exports.spin = async (event, context, callback) => {
+    const event_table_ = client.db(db).collection(event_table);
+    const deal_table_ = client.db(db).collection(deal_table);
+
+    event_table_.find({ status: "active" })
+        .toArray()
+        .then((res) => {
+            // console.log(res)
+            res.forEach(r => {
+                if (r.currentPoint / r.totalPoint >= 0.5) {
+                    // console.log(r)
+                    this.createEvent(r)
+                    const id = r._id;
+                    deal_table_.find(
+                        {
+                            eventId: new ObjectId(id)
+                        }
+                    ).toArray().then((result) => {
+                        // console.log(result)
+                        var kq = Math.floor(Math.random() * r.currentPoint);
+                        console.log(kq)
+                        result.forEach(async (item) => {
+                            if (kq > item.beginNumber && kq < item.endNumber) {
+                                console.log(kq)
+                                // await addNotification(item.userId, {
+                                //     eventId: r.eventId,
+                                //     content: 'Chúc mừng bạn là người chiến thắng sự kiện ' + r.eventName + ' với con số may mắn ' + kq,
+                                //     image: r.image
+                                // });
+                                // winner.push({
+                                //     eventId: r.eventId,
+                                //     userId: item.userId,
+                                //     username: item.username,
+                                //     eventName: r.eventName,
+                                //     image: r.image,
+                                //     eventPrice: r.price,
+                                //     point: item.point,
+                                //     result: kq
+                                // })
+                                // // console.log(item.userId)
+                                // db.update({
+                                //     TableName: TableName,
+                                //     Key: {
+                                //         eventId: id,
+                                //     },
+                                //     UpdateExpression: 'set #winner = :winner, #status = :status, #winnerNumber = :winnerNumber',
+                                //     ExpressionAttributeNames: {
+                                //         "#winner": "winner",
+                                //         "#status": "status",
+                                //         "#winnerNumber": "winnerNumber"
+                                //     },
+                                //     ExpressionAttributeValues: {
+                                //         ":winner": item.username,
+                                //         ":status": "finish",
+                                //         ":winnerNumber": kq
+                                //     },
+                                // })
+                                //     .promise()
+                            } else {
+                                // console.log(1)
+                                // await addNotification(item.userId, {
+                                //     eventId: r.eventId,
+                                //     content: 'Sự kiện ' + r.eventName + ' đã kết thúc với con số may mắn ' + kq + '.Chúc bạn may mắn lần sau',
+                                //     image: r.image
+                                // })
+                            }
+                        })
+                    })
+                    // .catch((err) => {
+                    //     console.log(err)
+                    // })
+                    // console.log(new Date().getDate - new Date(r.createdAt).getDate())
+                }
+            });
+        })
+    // .catch((err) => {
+    //     return response("", err, 500)
+    // })
+};
 
 module.exports.update = async (event, context, callback) => {
     let user = context.prev;
