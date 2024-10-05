@@ -9,16 +9,10 @@ const client = new MongoClient(uri, {
 const db = process.env.DB
 const winner_table = "winner"
 const { response } = require("../init/res");
-<<<<<<< HEAD
-const db = require('../init/db');
-=======
-const { uuid } = require("uuidv4");
->>>>>>> faaf951f1fa6b2986dd0d67386816a903ad19e16
 const { convertData } = require("../init/convertData")
 const TableName = process.env.WINNER_TABLE;
 const userTable = process.env.USER_TABLE;
 const fields = {
-    // winnerId: { type: String, default: uuid() },
     userId: { type: String },
     username: { type: String },
     eventId: { type: String },
