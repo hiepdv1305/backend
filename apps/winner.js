@@ -1,9 +1,16 @@
 'use strict';
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const uri = process.env.DBURL;
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1,
+});
+const db = process.env.DB
+const winner_table = "winner"
 const { response } = require("../init/res");
-const db = require('../init/db');
 const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
-const { addNotification } = require('../init/addNotification')
 const TableName = process.env.WINNER_TABLE;
 const userTable = process.env.USER_TABLE;
 const fields = {
@@ -25,22 +32,19 @@ const fields = {
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
 module.exports.push = async (item) => {
+    const winner_table_ = client.db(db).collection(winner_table);
     let data = convertData(fields, item);
     // console.log(data)
-    return db.put(
-        {
-            TableName: TableName,
-            Item: data,
-        }
-    ).promise()
+    return winner_table_.insertOne(
+        data
+    )
 
 };
 module.exports.getAll = async (event, context, callback) => {
-    const params = {
-        TableName: TableName
-    }
-    return db.scan(params)
-        .promise()
+    const winner_table_ = client.db(db).collection(winner_table);
+    
+    return winner_table_.find({})
+        .toArray()
         .then((res) => {
             return response(res, "success", 200)
         })

@@ -154,51 +154,36 @@ module.exports.spin = async (event, context, callback) => {
                     // console.log(r)
                     this.createEvent(r)
                     const id = r._id;
+                    console.log(id)
                     deal_table_.find(
                         {
-                            eventId: new ObjectId(id)
+                            eventId: id.toString()
                         }
                     ).toArray().then((result) => {
-                        // console.log(result)
+                        console.log(result)
                         var kq = Math.floor(Math.random() * r.currentPoint);
-                        console.log(kq)
                         result.forEach(async (item) => {
                             if (kq > item.beginNumber && kq < item.endNumber) {
-                                console.log(kq)
                                 // await addNotification(item.userId, {
                                 //     eventId: r.eventId,
                                 //     content: 'Chúc mừng bạn là người chiến thắng sự kiện ' + r.eventName + ' với con số may mắn ' + kq,
                                 //     image: r.image
                                 // });
-                                // winner.push({
-                                //     eventId: r.eventId,
-                                //     userId: item.userId,
-                                //     username: item.username,
-                                //     eventName: r.eventName,
-                                //     image: r.image,
-                                //     eventPrice: r.price,
-                                //     point: item.point,
-                                //     result: kq
-                                // })
+                                winner.push({
+                                    eventId: r._id,
+                                    userId: item.userId,
+                                    username: item.username,
+                                    eventName: r.eventName,
+                                    image: r.image,
+                                    eventPrice: r.price,
+                                    point: item.point,
+                                    result: kq
+                                })
                                 // // console.log(item.userId)
-                                // db.update({
-                                //     TableName: TableName,
-                                //     Key: {
-                                //         eventId: id,
-                                //     },
-                                //     UpdateExpression: 'set #winner = :winner, #status = :status, #winnerNumber = :winnerNumber',
-                                //     ExpressionAttributeNames: {
-                                //         "#winner": "winner",
-                                //         "#status": "status",
-                                //         "#winnerNumber": "winnerNumber"
-                                //     },
-                                //     ExpressionAttributeValues: {
-                                //         ":winner": item.username,
-                                //         ":status": "finish",
-                                //         ":winnerNumber": kq
-                                //     },
-                                // })
-                                //     .promise()
+                                event_table_.updateOne({ _id: new ObjectId(id) }, {
+                                    $set: { winner: item.username, status: "finish", winnerNumber: kq }
+
+                                })
                             } else {
                                 // console.log(1)
                                 // await addNotification(item.userId, {
