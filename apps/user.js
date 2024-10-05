@@ -10,6 +10,7 @@ const db = process.env.DB
 const user_table = "user"
 const { response } = require("../init/res");
 const bcrypt = require("bcryptjs");
+// const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const aws = require("aws-sdk");
 const s3 = new aws.S3();
@@ -29,29 +30,29 @@ const fields = {
     createdAt: { type: Date, default: new Date().toISOString() },
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
-const rechangeFields = {
-    // rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
-    userId: { type: String },
-    bankName: { type: String },
-    amout: { type: Number },
-    status: { type: String, default: 'waiting' },
-    code: { type: String },
-    bankAccount: { type: String },
-    bankAccountNumber: { type: String },
-    createdAt: { type: Date, default: new Date().toISOString() },
-    updatedAt: { type: Date, default: new Date().toISOString() }
-}
-const withdrawalFields = {
-    // withdrawalId: { type: String, default: uuid() },
-    userId: { type: String },
-    bankName: { type: String },
-    amout: { type: Number },
-    status: { type: String, default: 'waiting' },
-    bankAccount: { type: String },
-    bankAccountNumber: { type: String },
-    createdAt: { type: Date, default: new Date().toISOString() },
-    updatedAt: { type: Date, default: new Date().toISOString() }
-}
+// const rechangeFields = {
+//     rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
+//     userId: { type: String },
+//     bankName: { type: String },
+//     amout: { type: Number },
+//     status: { type: String, default: 'waiting' },
+//     code: { type: String },
+//     bankAccount: { type: String },
+//     bankAccountNumber: { type: String },
+//     createdAt: { type: Date, default: new Date().toISOString() },
+//     updatedAt: { type: Date, default: new Date().toISOString() }
+// }
+// const withdrawalFields = {
+//     withdrawalId: { type: String, default: uuid() },
+//     userId: { type: String },
+//     bankName: { type: String },
+//     amout: { type: Number },
+//     status: { type: String, default: 'waiting' },
+//     bankAccount: { type: String },
+//     bankAccountNumber: { type: String },
+//     createdAt: { type: Date, default: new Date().toISOString() },
+//     updatedAt: { type: Date, default: new Date().toISOString() }
+// }
 const TableName = process.env.USER_TABLE;
 const RechangeTable = process.env.RECHANGE_TABLE
 const WithdrawalTable = process.env.WITHDRAWAL_TABLE
@@ -138,21 +139,21 @@ module.exports.update = async (event, context, callback) => {
         .then(res => {
             if (res.Count == 0) return response("", "user not exist")
             const item = JSON.parse(event.body);
-            return user_table_.updateOne({userId: user.userId},{$set:item})
+            return user_table_.updateOne({ userId: user.userId }, { $set: item })
                 .then((res) => {
                     return response(res, "success", 200)
                 })
         })
-        // .catch(err => {
-        //     return response("", err, 500)
-        // })
+    // .catch(err => {
+    //     return response("", err, 500)
+    // })
 
 };
 
 // module.exports.rechange = async (event, context, callback) => {
-    
+
 //     let user = context.prev;
-    
+
 //     let data = JSON.parse(event.body);
 //     data.userId = user.userId
 //     data = convertData(rechangeFields, data)
@@ -170,7 +171,7 @@ module.exports.getInfomation = async (event, context, callback) => {
     let user = context.prev;
     const user_table_ = client.db(db).collection(user_table);
     return user_table_.findOne({
-            userId: user.userId,
+        userId: user.userId,
     }).then(res => {
         return response(res, "success", 200)
     }).catch(err => {
@@ -183,13 +184,15 @@ module.exports.changePassword = async (event, context, callback) => {
     let user = context.prev;
     const user_table_ = client.db(db).collection(user_table);
     return user_table_.findOne({
-            userId: user.userId
+        userId: user.userId
     }).then(res => {
         if (bcrypt.compareSync(data.oldPassword, res.password)) {
             let salt = bcrypt.genSaltSync(10);
-            return user_table_.updateOne({userId: user.userId},{$set:{
+            return user_table_.updateOne({ userId: user.userId }, {
+                $set: {
                     password: bcrypt.hashSync(data.newPassword, salt)
-            }}).then(res => {
+                }
+            }).then(res => {
                 return response("", "Thay đổi mật khẩu thành công", 200);
             })
         } else {
@@ -205,17 +208,17 @@ module.exports.getAllUser = async (event, context, callback) => {
     let user = context.prev;
     // console.log(user)
     const user_table_ = client.db(db).collection(user_table);
-    if(user.role == "admin"){
+    if (user.role == "admin") {
         return user_table_.find({
         }).toArray().then(res => {
             return response(res, "success", 200)
         }).catch(err => {
-            return response(err, "can't get user Infomation",404)
+            return response(err, "can't get user Infomation", 404)
         })
     } else {
-        return response("","Không đủ quyền thực hiện thao tác",403)
+        return response("", "Không đủ quyền thực hiện thao tác", 403)
     }
-    
+
 };
 
 // module.exports.acceptRechange = async (event, context, callback) => {

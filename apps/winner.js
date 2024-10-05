@@ -40,7 +40,7 @@ module.exports.push = async (item) => {
 };
 module.exports.getAll = async (event, context, callback) => {
     const winner_table_ = client.db(db).collection(winner_table);
-    
+
     return winner_table_.find({})
         .toArray()
         .then((res) => {
