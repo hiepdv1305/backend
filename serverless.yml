@@ -11,15 +11,14 @@ custom:
     #test-db
     # DBURL: "mongodb://172.31.3.197:27017"
     DB: "tmdt"
-    BUCKET: "cococas-product"
-    # origin: "*"
-    USER_TABLE: usersTable
-    PRODUCT_TABLE: productsTable
-    EVENT_TABLE: eventsTable
-    DEAL_TABLE: dealsTable
-    RECHANGE_TABLE: rechangeTable
-    WINNER_TABLE: winnerTable
-    WITHDRAWAL_TABLE: withdrawalTable
+    BUCKET: "admintmdt"
+    # USER_TABLE: usersTable
+    # PRODUCT_TABLE: productsTable
+    # EVENT_TABLE: eventsTable
+    # DEAL_TABLE: dealsTable
+    # RECHANGE_TABLE: rechangeTable
+    # WINNER_TABLE: winnerTable
+    # WITHDRAWAL_TABLE: withdrawalTable
 provider:
   name: aws
   runtime: nodejs16.x
@@ -236,6 +235,16 @@ functions:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
   #product
+  uploadfile:
+    handler:
+      - apps/product.uploadFile
+    events:
+      - http:
+          path: product/upload
+          method: put
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   createproduct:
     handler:
       - apps/product.create
