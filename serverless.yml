@@ -235,6 +235,46 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  #balance_fluctuation
+  create_balance_fluctuation:
+    handler:
+      - apps/balance_fluctuation.create_balance_fluctuation
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: balance_fluctuation/create
+          method: post
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true 
+  get_balance_fluctuation:
+    handler:
+      - apps/balance_fluctuation.getBalanceFluctuation
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: balance_fluctuation/get
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true 
+  getall_balance_fluctuation:
+    handler:
+      - apps/balance_fluctuation.getAllBalanceFluctuation
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: balance_fluctuation/getAll
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true 
   #product
   createproduct:
     handler:
