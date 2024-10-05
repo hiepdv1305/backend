@@ -10,7 +10,7 @@ const db = process.env.DB
 const user_table = "user"
 const { response } = require("../init/res");
 const bcrypt = require("bcryptjs");
-const { uuid } = require("uuidv4");
+// const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const aws = require("aws-sdk");
 const s3 = new aws.S3();
@@ -30,29 +30,29 @@ const fields = {
     createdAt: { type: Date, default: new Date().toISOString() },
     updatedAt: { type: Date, default: new Date().toISOString() }
 };
-const rechangeFields = {
-    rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
-    userId: { type: String },
-    bankName: { type: String },
-    amout: { type: Number },
-    status: { type: String, default: 'waiting' },
-    code: { type: String },
-    bankAccount: { type: String },
-    bankAccountNumber: { type: String },
-    createdAt: { type: Date, default: new Date().toISOString() },
-    updatedAt: { type: Date, default: new Date().toISOString() }
-}
-const withdrawalFields = {
-    withdrawalId: { type: String, default: uuid() },
-    userId: { type: String },
-    bankName: { type: String },
-    amout: { type: Number },
-    status: { type: String, default: 'waiting' },
-    bankAccount: { type: String },
-    bankAccountNumber: { type: String },
-    createdAt: { type: Date, default: new Date().toISOString() },
-    updatedAt: { type: Date, default: new Date().toISOString() }
-}
+// const rechangeFields = {
+//     rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
+//     userId: { type: String },
+//     bankName: { type: String },
+//     amout: { type: Number },
+//     status: { type: String, default: 'waiting' },
+//     code: { type: String },
+//     bankAccount: { type: String },
+//     bankAccountNumber: { type: String },
+//     createdAt: { type: Date, default: new Date().toISOString() },
+//     updatedAt: { type: Date, default: new Date().toISOString() }
+// }
+// const withdrawalFields = {
+//     withdrawalId: { type: String, default: uuid() },
+//     userId: { type: String },
+//     bankName: { type: String },
+//     amout: { type: Number },
+//     status: { type: String, default: 'waiting' },
+//     bankAccount: { type: String },
+//     bankAccountNumber: { type: String },
+//     createdAt: { type: Date, default: new Date().toISOString() },
+//     updatedAt: { type: Date, default: new Date().toISOString() }
+// }
 const TableName = process.env.USER_TABLE;
 const RechangeTable = process.env.RECHANGE_TABLE
 const WithdrawalTable = process.env.WITHDRAWAL_TABLE

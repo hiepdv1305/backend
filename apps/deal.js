@@ -149,3 +149,19 @@ module.exports.userGet = async (event, context, callback) => {
             return response("", "server error", 500)
         })
 };
+
+module.exports.getAllDeal = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != "admin") {
+        return response("", "no permision", 500)
+    } else {
+    const deal_table_ = client.db(db).collection(deal_table);
+    return deal_table_.find().toArray()
+        .then((res) => {
+            return response(res, "success", 200)
+        })
+        .catch((err) => {
+            return response("", "server error", 500)
+        })
+    }
+};

@@ -403,6 +403,19 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  getalldeal:
+    handler:
+      - apps/deal.getAllDeal
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: deal/get
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
 
 #winner
   getallwinner:
