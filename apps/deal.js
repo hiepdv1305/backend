@@ -12,7 +12,6 @@ const event_table = "event"
 const user_table = "user"
 const { response } = require("../init/res");
 const { create_balance_fluctuation } = require("./balance_fluctuation")
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
 

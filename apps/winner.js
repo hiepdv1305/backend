@@ -9,12 +9,11 @@ const client = new MongoClient(uri, {
 const db = process.env.DB
 const winner_table = "winner"
 const { response } = require("../init/res");
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const TableName = process.env.WINNER_TABLE;
 const userTable = process.env.USER_TABLE;
 const fields = {
-    winnerId: { type: String, default: uuid() },
+    // winnerId: { type: String, default: uuid() },
     userId: { type: String },
     username: { type: String },
     eventId: { type: String },
@@ -42,7 +41,7 @@ module.exports.push = async (item) => {
 };
 module.exports.getAll = async (event, context, callback) => {
     const winner_table_ = client.db(db).collection(winner_table);
-    
+
     return winner_table_.find({})
         .toArray()
         .then((res) => {

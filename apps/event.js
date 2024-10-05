@@ -11,7 +11,6 @@ const event_table = "event"
 const product_table = "product"
 const deal_table = "deal"
 const { response } = require("../init/res");
-const { uuid } = require("uuidv4");
 const { convertData } = require("../init/convertData")
 const { addNotification } = require('../init/addNotification')
 const winner = require('./winner')
