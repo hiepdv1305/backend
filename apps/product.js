@@ -1,4 +1,5 @@
 'use strict';
+const AWS = require("aws-sdk");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.DBURL;
 const client = new MongoClient(uri, {
@@ -8,6 +9,8 @@ const client = new MongoClient(uri, {
 });
 const db = process.env.DB
 const product_table = "product"
+const s3 = new AWS.S3();
+const Bucket = process.env.BUCKET;
 const { response } = require("../init/res");
 const { convertData } = require("../init/convertData")
 const fields = {
@@ -118,4 +121,16 @@ module.exports.update = async (event, context, callback) => {
 
     }
 
+};
+module.exports.uploadFile = async (event, context, callback) => {
+    // let file_data = JSON.parse(event.body);
+    console.log(event.body)
+    let file_data = JSON.parse(event.body);
+    const params = {
+        Bucket: Bucket,
+        Key: "Picture/" + file_data.filename,
+        ContentType: file_data.filetype, // Loại tệp tin
+    };
+    const presignedUrl = s3.getSignedUrl("putObject", params);
+    return response(presignedUrl, "Presigned URL", 200);
 };
