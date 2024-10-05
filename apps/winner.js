@@ -13,7 +13,6 @@ const { convertData } = require("../init/convertData")
 const TableName = process.env.WINNER_TABLE;
 const userTable = process.env.USER_TABLE;
 const fields = {
-    // winnerId: { type: String, default: uuid() },
     userId: { type: String },
     username: { type: String },
     eventId: { type: String },
