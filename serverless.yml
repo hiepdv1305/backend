@@ -90,6 +90,18 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
+  adminupdateuser:
+    handler: apps/user.adminUpdate
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/adminupdate/{id}
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
   getnotification:
     handler: apps/user.getNotification
     middleware:

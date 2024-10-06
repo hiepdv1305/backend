@@ -147,6 +147,30 @@ module.exports.update = async (event, context, callback) => {
     // })
 
 };
+module.exports.adminUpdate = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != "admin") {
+        return response("", "no permision", 500)
+    } else {
+        let user = context.prev;
+        const id = event.pathParameters.id
+        const user_table_ = client.db(db).collection(user_table);
+        return user_table_.findOne({
+            _id: new ObjectId(id)
+        })
+            .then(res => {
+                if (res.Count == 0) return response("", "user not exist")
+                const item = JSON.parse(event.body);
+                return user_table_.updateOne({ userId: user.userId }, { $set: item })
+                    .then((res) => {
+                        return response(res, "success", 200)
+                    })
+            })
+        // .catch(err => {
+        //     return response("", err, 500)
+        // })
+    }
+};
 
 // module.exports.rechange = async (event, context, callback) => {
 
