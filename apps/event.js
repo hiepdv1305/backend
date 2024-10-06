@@ -169,7 +169,7 @@ module.exports.spin = async (event, context, callback) => {
                                 //     image: r.image
                                 // });
                                 winner.push({
-                                    eventId: r._id,
+                                    eventId: r._id.toString(),
                                     userId: item.userId,
                                     username: item.username,
                                     eventName: r.eventName,

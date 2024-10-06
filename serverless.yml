@@ -1,5 +1,5 @@
 service: backend
-frameworkVersion: '4'
+frameworkVersion: '3'
 
 custom:
   settings:
@@ -98,6 +98,18 @@ functions:
     events:
       - http:
           path: user/notification
+          method: get
+          cors:
+            origin: ${self:custom.settings.origin}
+            allowCredentials: true
+  admingetinfomation:
+    handler: apps/user.adminGetInfomation
+    middleware:
+      pre:
+        - middleware/authenication.isAuth
+    events:
+      - http:
+          path: user/admingetinfomation/{id}
           method: get
           cors:
             origin: ${self:custom.settings.origin}
