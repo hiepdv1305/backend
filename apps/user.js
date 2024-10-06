@@ -2,9 +2,9 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const uri = process.env.DBURL
 const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverApi: ServerApiVersion.v1
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1
 })
 const db = process.env.DB
 const user_table = 'user'
@@ -18,17 +18,17 @@ var md5 = require('md5')
 const jwtHelper = require('../init/jwt')
 const config = require('../Config/config')
 const fields = {
-  username: { type: String },
-  password: { type: String },
-  address: { type: String },
-  role: { type: String, default: 'user' },
-  balance: { type: Number, default: 0 },
-  fullname: { type: String, default: '' },
-  phonenumber: { type: String, default: '' },
-  email: { type: String, default: '' },
-  gendle: { type: Number, default: 1 },
-  createdAt: { type: Date, default: new Date().toISOString() },
-  updatedAt: { type: Date, default: new Date().toISOString() }
+    username: { type: String },
+    password: { type: String },
+    address: { type: String },
+    role: { type: String, default: 'user' },
+    balance: { type: Number, default: 0 },
+    fullname: { type: String, default: '' },
+    phonenumber: { type: String, default: '' },
+    email: { type: String, default: '' },
+    gendle: { type: Number, default: 1 },
+    createdAt: { type: Date, default: new Date().toISOString() },
+    updatedAt: { type: Date, default: new Date().toISOString() }
 }
 // const rechangeFields = {
 //     rechangeId: { type: String, default: crypto.randomBytes(16).toString('hex') },
@@ -55,67 +55,67 @@ const fields = {
 // const RechangeTable = process.env.RECHANGE_TABLE
 // const WithdrawalTable = process.env.WITHDRAWAL_TABLE
 module.exports.register = async (event, context, callback) => {
-  context.callbackWaitsForEmptyEventLoop = false
-  const user_table_ = client.db(db).collection(user_table)
-  let reqBody = JSON.parse(event.body)
-  let salt = bcrypt.genSaltSync(10)
-  reqBody.password = bcrypt.hashSync(reqBody.password, salt)
-  let data = convertData(fields, reqBody)
-  let params = {
-    username: data.username
-  }
-  return user_table_
-    .findOne(params)
-    .then(res => {
-      // console.log(res)
-      if (res) {
-        console.log(1)
-        return response('', 'username already exists', 400)
-      } else {
-        return user_table_.insertOne(data).then(() => {
-          return response('', 'success', 200)
+    context.callbackWaitsForEmptyEventLoop = false
+    const user_table_ = client.db(db).collection(user_table)
+    let reqBody = JSON.parse(event.body)
+    let salt = bcrypt.genSaltSync(10)
+    reqBody.password = bcrypt.hashSync(reqBody.password, salt)
+    let data = convertData(fields, reqBody)
+    let params = {
+        username: data.username
+    }
+    return user_table_
+        .findOne(params)
+        .then(res => {
+            // console.log(res)
+            if (res) {
+                console.log(1)
+                return response('', 'username already exists', 400)
+            } else {
+                return user_table_.insertOne(data).then(() => {
+                    return response('', 'success', 200)
+                })
+            }
         })
-      }
-    })
-    .catch(err => {
-      console.log(err)
-      return response('', 'server error', 500)
-    })
+        .catch(err => {
+            console.log(err)
+            return response('', 'server error', 500)
+        })
 }
 
 module.exports.login = async (event, context, callback) => {
-  const user_table_ = client.db(db).collection(user_table)
-  let tokenList = {}
-  context.callbackWaitsForEmptyEventLoop = false
-  const data = JSON.parse(event.body)
-  const params = {
-    username: data.username
-  }
-  return user_table_
-    .findOne(params)
-    .then(async res => {
-      console.log(res)
-      if (res && bcrypt.compareSync(data.password, res.password)) {
-        const accessToken = await jwtHelper.generateToken(
-          res,
-          config.accessTokenSecret,
-          config.accessTokenLife
-        )
-        const refreshToken = await jwtHelper.generateToken(
-          res,
-          config.refreshTokenSecret,
-          config.refreshTokenLife
-        )
-        tokenList[refreshToken] = { accessToken, refreshToken }
-        // result.cookie('refreshToken', refreshToken, { secure: false, httpOnly: true, maxAge: config.refreshTokenCookieLife });
-        return response(accessToken, 'success', 200)
-      } else {
-        return response('', 'user or password incorrect', 400)
-      }
-    })
-    .catch(err => {
-      return response('', 'user or password incorrect', 400)
-    })
+    const user_table_ = client.db(db).collection(user_table)
+    let tokenList = {}
+    context.callbackWaitsForEmptyEventLoop = false
+    const data = JSON.parse(event.body)
+    const params = {
+        username: data.username
+    }
+    return user_table_
+        .findOne(params)
+        .then(async res => {
+            console.log(res)
+            if (res && bcrypt.compareSync(data.password, res.password)) {
+                const accessToken = await jwtHelper.generateToken(
+                    res,
+                    config.accessTokenSecret,
+                    config.accessTokenLife
+                )
+                const refreshToken = await jwtHelper.generateToken(
+                    res,
+                    config.refreshTokenSecret,
+                    config.refreshTokenLife
+                )
+                tokenList[refreshToken] = { accessToken, refreshToken }
+                // result.cookie('refreshToken', refreshToken, { secure: false, httpOnly: true, maxAge: config.refreshTokenCookieLife });
+                return response(accessToken, 'success', 200)
+            } else {
+                return response('', 'user or password incorrect', 400)
+            }
+        })
+        .catch(err => {
+            return response('', 'user or password incorrect', 400)
+        })
 }
 
 // module.exports.getNotification = async (event, context, callback) => {
@@ -145,25 +145,26 @@ module.exports.update = async (event, context, callback) => {
     return user_table_.findOne({
         _id: new ObjectId(user._id)
     })
-    .then(res => {
-      // console.log(res)
-      if (!res) return response('', 'user not exist')
-      const item = JSON.parse(event.body)
-      // console.log(item)
-      return user_table_
-        .updateOne(
-          {
-            _id: new ObjectId(user._id)
-          },
-          { $set: item }
-        )
         .then(res => {
-          return response(res, 'success', 200)
+            // console.log(res)
+            if (!res) return response('', 'user not exist')
+            const item = JSON.parse(event.body)
+            item.updatedAt = new Date().toISOString()
+            // console.log(item)
+            return user_table_
+                .updateOne(
+                    {
+                        _id: new ObjectId(user._id)
+                    },
+                    { $set: item }
+                )
+                .then(res => {
+                    return response(res, 'success', 200)
+                })
+                .catch(err => {
+                    return response("", err, 500)
+                })
         })
-    .catch(err => {
-        return response("", err, 500)
-    })
-    })
 };
 module.exports.adminUpdate = async (event, context, callback) => {
     let user = context.prev;
@@ -179,6 +180,7 @@ module.exports.adminUpdate = async (event, context, callback) => {
             .then(res => {
                 if (!res) return response("", "user not exist")
                 const item = JSON.parse(event.body);
+                item.updatedAt = new Date().toISOString()
                 return user_table_.updateOne({ _id: new ObjectId(id) }, { $set: item })
                     .then((res) => {
                         return response(res, "success", 200)
@@ -217,13 +219,13 @@ module.exports.getInfomation = async (event, context, callback) => {
     }).catch(err => {
         return response(err, "can't get user Infomation")
     })
-    .then(res => {
-      console.log(res)
-      return response(res, 'success', 200)
-    })
-    .catch(err => {
-      return response(err, "can't get user Infomation")
-    })
+        .then(res => {
+            console.log(res)
+            return response(res, 'success', 200)
+        })
+        .catch(err => {
+            return response(err, "can't get user Infomation")
+        })
 }
 
 module.exports.adminGetInfomation = async (event, context, callback) => {
@@ -267,47 +269,47 @@ module.exports.changePassword = async (event, context, callback) => {
         return response(err, "can't get user Infomation", 500);
 
     })
-    .then(res => {
-      if (bcrypt.compareSync(data.oldPassword, res.password)) {
-        let salt = bcrypt.genSaltSync(10)
-        return user_table_
-          .updateOne(
-            { _id: new ObjectId(user._id) },
-            {
-              $set: {
-                password: bcrypt.hashSync(data.newPassword, salt)
-              }
+        .then(res => {
+            if (bcrypt.compareSync(data.oldPassword, res.password)) {
+                let salt = bcrypt.genSaltSync(10)
+                return user_table_
+                    .updateOne(
+                        { _id: new ObjectId(user._id) },
+                        {
+                            $set: {
+                                password: bcrypt.hashSync(data.newPassword, salt)
+                            }
+                        }
+                    )
+                    .then(res => {
+                        return response('', 'Thay đổi mật khẩu thành công', 200)
+                    })
+            } else {
+                return response('', 'Mật khẩu cũ không chính xác', 500)
             }
-          )
-          .then(res => {
-            return response('', 'Thay đổi mật khẩu thành công', 200)
-          })
-      } else {
-        return response('', 'Mật khẩu cũ không chính xác', 500)
-      }
-    })
-    .catch(err => {
-      console.log(err)
-      return response(err, "can't get user Infomation", 500)
-    })
+        })
+        .catch(err => {
+            console.log(err)
+            return response(err, "can't get user Infomation", 500)
+        })
 }
 module.exports.getAllUser = async (event, context, callback) => {
-  let user = context.prev
-  // console.log(user)
-  const user_table_ = client.db(db).collection(user_table)
-  if (user.role == 'admin') {
-    return user_table_
-      .find({})
-      .toArray()
-      .then(res => {
-        return response(res, 'success', 200)
-      })
-      .catch(err => {
-        return response(err, "can't get user Infomation", 404)
-      })
-  } else {
-    return response('', 'Không đủ quyền thực hiện thao tác', 403)
-  }
+    let user = context.prev
+    // console.log(user)
+    const user_table_ = client.db(db).collection(user_table)
+    if (user.role == 'admin') {
+        return user_table_
+            .find({})
+            .toArray()
+            .then(res => {
+                return response(res, 'success', 200)
+            })
+            .catch(err => {
+                return response(err, "can't get user Infomation", 404)
+            })
+    } else {
+        return response('', 'Không đủ quyền thực hiện thao tác', 403)
+    }
 }
 
 // module.exports.acceptRechange = async (event, context, callback) => {
