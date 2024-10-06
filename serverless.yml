@@ -1,5 +1,5 @@
 service: backend
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 custom:
   settings:
@@ -90,15 +90,15 @@ functions:
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
-  adminupdateuser:
+  adminupdateUser:
     handler: apps/user.adminUpdate
     middleware:
       pre:
         - middleware/authenication.isAuth
     events:
       - http:
-          path: user/adminupdate/{id}
-          method: get
+          path: user/adminUpdate/{id}
+          method: post
           cors:
             origin: ${self:custom.settings.origin}
             allowCredentials: true
