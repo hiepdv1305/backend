@@ -179,7 +179,7 @@ module.exports.adminUpdate = async (event, context, callback) => {
             .then(res => {
                 if (!res) return response("", "user not exist")
                 const item = JSON.parse(event.body);
-                return user_table_.updateOne({ userId: user.userId }, { $set: item })
+                return user_table_.updateOne({ _id: new ObjectId(user._id) }, { $set: item })
                     .then((res) => {
                         return response(res, "success", 200)
                     })
