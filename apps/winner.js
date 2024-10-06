@@ -8,10 +8,10 @@ const client = new MongoClient(uri, {
 });
 const db = process.env.DB
 const winner_table = "winner"
+const user_table = "user"
 const { response } = require("../init/res");
 const { convertData } = require("../init/convertData")
-const TableName = process.env.WINNER_TABLE;
-const userTable = process.env.USER_TABLE;
+const { create_balance_fluctuation } = require("./balance_fluctuation")
 const fields = {
     userId: { type: String },
     username: { type: String },
@@ -55,42 +55,19 @@ module.exports.reward = async (event, context, callback) => {
     let user = context.prev;
     const item = JSON.parse(event.body);
     console.log(item)
-    console.log(user)
-    return db.scan({
-        TableName: TableName,
-        FilterExpression: '#eventId = :eventId',
-        ExpressionAttributeNames: {
-            '#eventId': 'eventId',
-        },
-        ExpressionAttributeValues: {
-            ':eventId': item.eventId,
-        },
-    }).promise()
-        .then(res => {
-            if (res.Count == 0) return response("", "Sai thông tin", 500)
-            if (res.Items[0].userId != user.userId) return response("", "Yêu cầu không hợp lệ", 500);
-            if (res.Items[0].status != 'active') return response("", "Giải thưởng đã được trao", 500)
+    const winner_table_ = client.db(db).collection(winner_table);
+    const user_table_ = client.db(db).collection(user_table);
+    return winner_table_.findOne({
+        eventId: item.eventId
+    })
+        .then(async res => {
+            console.log(res)
+            if (!res) return response("", "Sai thông tin", 500)
+            if (res.userId != user._id) return response("", "Yêu cầu không hợp lệ", 500);
+            if (res.status != 'active') return response("", "Giải thưởng đã được trao", 500)
             if (item.option == 'product') {
-                let updateExpression = 'set';
-                let ExpressionAttributeNames = {};
-                let ExpressionAttributeValues = {};
                 item.status = 'waitting'
-                for (const property in item) {
-                    updateExpression += ` #${property} = :${property} ,`;
-                    ExpressionAttributeNames['#' + property] = property;
-                    ExpressionAttributeValues[':' + property] = item[property];
-                }
-                updateExpression = updateExpression.slice(0, -1);
-                const params = {
-                    TableName: TableName,
-                    Key: {
-                        winnerId: res.Items[0].winnerId,
-                    },
-                    UpdateExpression: updateExpression,
-                    ExpressionAttributeNames: ExpressionAttributeNames,
-                    ExpressionAttributeValues: ExpressionAttributeValues
-                };
-                return db.update(params).promise()
+                return winner_table_.updateOne({ winnerId: res.winnerId }, { $set: item })
                     .then((res) => {
                         return response(res, "success", 200)
                     })
@@ -98,51 +75,24 @@ module.exports.reward = async (event, context, callback) => {
                 // console.log(1)
 
 
-                db.get({
-                    TableName: userTable,
-                    Key: {
-                        userId: user.userId,
+                await create_balance_fluctuation(item.money, `Tra thuong su kien`, user._id)
+                winner_table_.updateOne({
+                    winnerId: res.winnerId
+                }, {
+                    $set: {
+                        option: 'money',
+                        status: 'finish'
                     },
-                }).promise().then(res => {
-                    // console.log(res)
-                    db.update({
-                        TableName: userTable,
-                        Key: {
-                            userId: user.userId,
-                        },
-                        UpdateExpression: 'set #amout = :amout',
-                        ExpressionAttributeNames: {
-                            "#amout": "amout"
-                        },
-                        ExpressionAttributeValues: {
-                            ":amout": res.Item.amout + item.money,
-                        },
-                    }).promise()
-                }).catch(err => {
-                    console.log(err)
-                })
-                db.update({
-                    TableName: TableName,
-                    Key: {
-                        winnerId: res.Items[0].winnerId,
-                    },
-                    UpdateExpression: 'set #option = :option , #status = :status',
-                    ExpressionAttributeNames: {
-                        "#option": "option",
-                        "#status": "status"
-                    },
-                    ExpressionAttributeValues: {
-                        ":option": 'money',
-                        ":status": 'finish'
-                    },
-                }).promise()
+                }
+
+                )
             }
 
             return response("", "success", 200)
         })
-        .catch(err => {
-            return response("", err, 500)
-        })
+        // .catch(err => {
+        //     return response("", err, 500)
+        // })
 
 
 

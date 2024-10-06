@@ -52,10 +52,8 @@ const fields = {
 //     bankAccountNumber: { type: String },
 //     createdAt: { type: Date, default: new Date().toISOString() },
 //     updatedAt: { type: Date, default: new Date().toISOString() }
-// }
-const TableName = process.env.USER_TABLE;
-const RechangeTable = process.env.RECHANGE_TABLE
-const WithdrawalTable = process.env.WITHDRAWAL_TABLE
+// const RechangeTable = process.env.RECHANGE_TABLE
+// const WithdrawalTable = process.env.WITHDRAWAL_TABLE
 module.exports.register = async (event, context, callback) => {
     context.callbackWaitsForEmptyEventLoop = false;
     const user_table_ = client.db(db).collection(user_table);
@@ -134,7 +132,7 @@ module.exports.update = async (event, context, callback) => {
     let user = context.prev;
     const user_table_ = client.db(db).collection(user_table);
     return user_table_.findOne({
-        userId: user.userId
+        _id: new ObjectId(user._id)
     })
         .then(res => {
             if (res.Count == 0) return response("", "user not exist")
@@ -171,7 +169,7 @@ module.exports.getInfomation = async (event, context, callback) => {
     let user = context.prev;
     const user_table_ = client.db(db).collection(user_table);
     return user_table_.findOne({
-        userId: user.userId,
+        _id: new ObjectId(user._id),
     }).then(res => {
         return response(res, "success", 200)
     }).catch(err => {
@@ -179,12 +177,29 @@ module.exports.getInfomation = async (event, context, callback) => {
     })
 };
 
+module.exports.adminGetInfomation = async (event, context, callback) => {
+    let user = context.prev;
+    if (user.role != "admin") {
+        return response("", "no permision", 500)
+    } else {
+        const id = event.pathParameters.id
+        const user_table_ = client.db(db).collection(user_table);
+        return user_table_.findOne({
+            _id: new ObjectId(id),
+        }).then(res => {
+            return response(res, "success", 200)
+        }).catch(err => {
+            return response(err, "can't get user Infomation")
+        })
+    }
+};
+
 module.exports.changePassword = async (event, context, callback) => {
     const data = JSON.parse(event.body);
     let user = context.prev;
     const user_table_ = client.db(db).collection(user_table);
     return user_table_.findOne({
-        userId: user.userId
+        _id: new ObjectId(user._id)
     }).then(res => {
         if (bcrypt.compareSync(data.oldPassword, res.password)) {
             let salt = bcrypt.genSaltSync(10);
