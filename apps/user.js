@@ -219,13 +219,6 @@ module.exports.getInfomation = async (event, context, callback) => {
     }).catch(err => {
         return response(err, "can't get user Infomation")
     })
-        .then(res => {
-            console.log(res)
-            return response(res, 'success', 200)
-        })
-        .catch(err => {
-            return response(err, "can't get user Infomation")
-        })
 }
 
 module.exports.adminGetInfomation = async (event, context, callback) => {

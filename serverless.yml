@@ -5,9 +5,9 @@ custom:
   settings:
     origin: "*"
     # db off
-    DBURL: "mongodb://18.143.112.122:27017"
+    # DBURL: "mongodb://18.143.112.122:27017"
     # db online
-    # DBURL: "mongodb://172.31.3.25:27017"
+    DBURL: "mongodb://172.31.3.25:27017"
     #test-db
     # DBURL: "mongodb://172.31.3.197:27017"
     DB: "tmdt"
@@ -22,7 +22,7 @@ custom:
 provider:
   name: aws
   runtime: nodejs16.x
-  region: us-east-1
+  region: ap-southeast-1
   environment: ${self:custom.settings}
   iamRoleStatements:
     - Effect: Allow

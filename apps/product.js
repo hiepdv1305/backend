@@ -124,8 +124,9 @@ module.exports.update = async (event, context, callback) => {
 };
 module.exports.uploadFile = async (event, context, callback) => {
     // let file_data = JSON.parse(event.body);
-    console.log(event.body)
-    let file_data = JSON.parse(event.body);
+    let file_data = JSON.parse(event.body);  
+    //   console.log(file_data)
+
     const params = {
         Bucket: Bucket,
         Key: "Picture/" + file_data.filename,
